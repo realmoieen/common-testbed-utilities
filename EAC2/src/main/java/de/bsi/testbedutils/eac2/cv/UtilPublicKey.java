@@ -123,7 +123,7 @@ public class UtilPublicKey {
                 	Generator g				0x83	Unsigned Integer
                 	Public value y			0x84	Unsigned Integer
                 */
-                // this case is not tested!!!
+                // this case is not tested!
                 KeyFactory kf = KeyFactory.getInstance(domainParameter.getType().toString());
                 DHPublicKeySpec keySpec = kf.getKeySpec(publicKey, DHPublicKeySpec.class);
                 
@@ -196,7 +196,7 @@ public class UtilPublicKey {
     public static byte[] toCompressedBytes(PublicKey publicKey, Type domainParameterType) {
         switch (domainParameterType) {
             case DH: {
-                // this case is not tested!!!
+                // this case is not tested!
                 try {
                     MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
                     return sha1.digest(publicKey.getEncoded());

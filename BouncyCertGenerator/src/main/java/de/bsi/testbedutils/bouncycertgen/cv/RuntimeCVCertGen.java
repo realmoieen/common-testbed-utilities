@@ -528,7 +528,7 @@ public class RuntimeCVCertGen {
             if (desc != null) {
                 CVExtensionData descExt = new CVExtensionData();
                 descExt.setType(CVExtensionType.extDescription);
-                // TODO: CHECK!!!!!
+                // TODO: CHECK!
                 // if this is being hashed, certificate output will be the hash and not the correct ASN1 certificate output, using desc.generates hex output directly
                 DataBuffer hash = DataBuffer.generateHash(desc.generate(), parseTAAlgorithm(signKey.getAlgorithm())); // use signkey information for hash algorithm
 

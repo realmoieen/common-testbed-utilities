@@ -499,7 +499,7 @@ public class SecureMessaging {
 
 	private byte[] pad( byte[] data ) throws EIDCryptoException {
 		if( null == data ) return null;
-		int numBlocks = data.length / blockLength + 1; // one padding byte is always added!!
+		int numBlocks = data.length / blockLength + 1; // one padding byte is always added!
 		int newLength = blockLength * numBlocks;
 		byte[] padded = Arrays.copyOf( data, newLength );
 		padded[ data.length ] = (byte)0x80;
