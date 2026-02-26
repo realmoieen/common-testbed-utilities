@@ -4,6 +4,8 @@ import de.bsi.testbedutils.cvc.cvcertificate.exception.CVInvalidKeySourceExcepti
 import de.bsi.testbedutils.cvc.cvcertificate.exception.CVKeyTypeNotSupportedException;
 import de.bsi.testbedutils.cvc.cvcertificate.exception.CVSignOpKeyMismatchException;
 
+import java.util.Objects;
+
 /**
  * @class  CCVSignKeyHolder
  * @brief  This class load, store the private key and generate the signature for a cv certificate
@@ -32,11 +34,12 @@ public class CVSignKeyHolder {
 	}
 
 	/**
-	 * This function sets the hash algorithm type
+	 * This function sets the hash algorithm type. Cannot be null
 	 * 
 	 * @param type
 	 */
 	public void setAlgorithm(TAAlgorithm type){
+        Objects.requireNonNull(type, "TAAlgorithm cannot be null");
 		m_algorithmType = type;
 	}
 
@@ -54,23 +57,13 @@ public class CVSignKeyHolder {
 	 * 
 	 * @return returns the key type 
 	 */
-	public KeyType getKeyType(){
-		if (m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_512 ||
-		      	m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_256 ||
-		      	m_algorithmType == TAAlgorithm.RSA_PSS_SHA_512 ||
-		      	m_algorithmType == TAAlgorithm.RSA_PSS_SHA_256)
-		      {
-		      	return KeyType.KEY_RSA;
-		      }
-		      else if (m_algorithmType == TAAlgorithm.ECDSA_SHA_512 ||
-		      	m_algorithmType == TAAlgorithm.ECDSA_SHA_256)
-		      {
-		      	return KeyType.KEY_ECDSA;
-		      }
+    public KeyType getKeyType() {
+        if (m_algorithmType == null) {
+            return KeyType.KEY_UNDEFINED;
+        }
+        return m_algorithmType.getKeyType();
+    }
 		      
-		      return KeyType.KEY_UNDEFINED;
-	}
-
 
 	/**
 	 * This function set the key source object for this class
@@ -108,10 +101,7 @@ public class CVSignKeyHolder {
 	    }
 	      
 	      
-	    if(m_algorithmType == TAAlgorithm.RSA_PSS_SHA_512 ||
-	    	m_algorithmType == TAAlgorithm.RSA_PSS_SHA_256 ||
-	      	m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_512 ||
-	      	m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_256)
+	    if(m_algorithmType.isRSA())
 	    {
 	      	if(m_KeySource.getKeyType() != KeyType.KEY_RSA)
 	      	{
@@ -120,8 +110,7 @@ public class CVSignKeyHolder {
 	      	}
 	      
 	    } 
-	    else if(m_algorithmType == TAAlgorithm.ECDSA_SHA_512 ||
-	      	m_algorithmType == TAAlgorithm.ECDSA_SHA_256)
+	    else if(m_algorithmType.isECDSA())
 	    {
 	     	if(m_KeySource.getKeyType() != KeyType.KEY_ECDSA)
 	      	{

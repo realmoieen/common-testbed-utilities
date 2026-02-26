@@ -50,44 +50,20 @@ public class PrivateKeySource extends IPrivateKeySource {
             throws CVKeyTypeNotSupportedException {
         Signature signature;
         try {
-            
-            switch (signGenOp) {
-                case RSA_v1_5_SHA_256:
-                    signature = Signature.getInstance("SHA256WithRSA", new BouncyCastleProvider());
-                    break;
-                case RSA_v1_5_SHA_512:
-                    signature = Signature.getInstance("SHA512WithRSA", new BouncyCastleProvider());
-                    break;
-                case RSA_PSS_SHA_256:
-                    signature = Signature.getInstance("SHA256withRSA/PSS", new BouncyCastleProvider());
-                    break;
-                case RSA_PSS_SHA_512:
-                    signature = Signature.getInstance("SHA512withRSA/PSS", new BouncyCastleProvider());
-                    break;
-                case ECDSA_SHA_256:
-                    signature = Signature.getInstance("SHA256withCVC-ECDSA", new BouncyCastleProvider());
-                    break;
-                case ECDSA_SHA_512:
-                    signature = Signature.getInstance("SHA512withCVC-ECDSA", new BouncyCastleProvider());
-                    break;
-                default:
-                    // m_rLog << "unknown algorithm type" << std::endl;
-                    throw new CVUnknownAlgorithmException();
+            if(signGenOp == TAAlgorithm.UNDEFINED){
+                // m_rLog << "unknown algorithm type" << std::endl;
+                throw new CVUnknownAlgorithmException();
             }
-            
+            signature = Signature.getInstance(signGenOp.getSignAlgo(), new BouncyCastleProvider());
             signature.initSign(m_key);
             signature.update(rContent.toByteArray());
             byte[] sign = signature.sign();
             
-            switch (signGenOp) {
-                case ECDSA_SHA_256:
-                case ECDSA_SHA_512:
+            if (signGenOp.isECDSA()) {
                     DataBuffer plainSign = convertToPlainBC(sign);
                     rSignature.assign(plainSign);
-                    break;
-                default:
+            } else {
                     rSignature.assign(sign);
-                    break;
             }
         } catch (Exception e) {
             throw new CVKeyTypeNotSupportedException(e);

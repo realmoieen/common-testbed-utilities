@@ -10,6 +10,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.Objects;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -106,39 +107,14 @@ public class CVPubKeyHolder {
         DataBuffer out = new DataBuffer();
         
         // insert terminal authentication signature algorithm (HASH) OID
-        switch (m_algorithmType) {
-            case RSA_v1_5_SHA_512:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_RSA_v1_5_SHA_512));
-                break;
-            case RSA_v1_5_SHA_256:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_RSA_v1_5_SHA_256));
-                break;
-            case RSA_PSS_SHA_512:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_RSA_PSS_SHA_512));
-                break;
-            case RSA_PSS_SHA_256:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_RSA_PSS_SHA_256));
-                break;
-            case ECDSA_SHA_512:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_ECDSA_SHA_512));
-                break;
-            case ECDSA_SHA_256:
-                TLV.append(out, CVCertificate.s_CvOIDTag,
-                        Oids.concat(Oids.OID_BSI_DE, oidPart, Oids.OID_ECDSA_SHA_256));
-                break;
-            default:
-                // Do nothing; return empty buffer
-                break;
+        byte[] oid = m_algorithmType.getOid();
+        if(oid != null) {
+            TLV.append(out, CVCertificate.s_CvOIDTag,
+                    Oids.concat(Oids.OID_BSI_DE, oidPart, oid));
         }
         
         // now include the key depend on his type
-        if (m_algorithmType == TAAlgorithm.RSA_PSS_SHA_256 || m_algorithmType == TAAlgorithm.RSA_PSS_SHA_512
-                || m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_256 || m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_512) {
+        if (m_algorithmType.isRSAWithSHA()) {
             // check whether this key is loaded
             if (m_RSAKey == null && m_ECPubPoint == null) {
                 loadKeyFromKeySource();
@@ -150,8 +126,7 @@ public class CVPubKeyHolder {
             }
             
             out.append(generateCertPubKeyRSA());
-        } else if (m_algorithmType == TAAlgorithm.ECDSA_SHA_256
-                || m_algorithmType == TAAlgorithm.ECDSA_SHA_512) {
+        } else if (m_algorithmType.isECDSAWithSHA()) {
             // check whether this key is loaded
             if (m_RSAKey == null && m_ECPubPoint == null) {
                 loadKeyFromKeySource();
@@ -211,27 +186,14 @@ public class CVPubKeyHolder {
         
         // Test the OID
         // decode the right signature algorithm
-        if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_RSA_v1_5_SHA_512))) {
-            m_algorithmType = TAAlgorithm.RSA_v1_5_SHA_512;
-        } else if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_RSA_v1_5_SHA_256))) {
-            m_algorithmType = TAAlgorithm.RSA_v1_5_SHA_256;
-        } else if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_RSA_PSS_SHA_512))) {
-            m_algorithmType = TAAlgorithm.RSA_PSS_SHA_512;
-        } else if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_RSA_PSS_SHA_256))) {
-            m_algorithmType = TAAlgorithm.RSA_PSS_SHA_256;
-        } else if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_ECDSA_SHA_512))) {
-            m_algorithmType = TAAlgorithm.ECDSA_SHA_512;
-        } else if (extrOID.getValue().equals(Oids.concat(Oids.OID_BSI_DE, Oids.OID_TA, Oids.OID_ECDSA_SHA_256))) {
-            m_algorithmType = TAAlgorithm.ECDSA_SHA_256;
-        } else {
-            // m_rLog << "Error: Defined signature algorithm is invalid" <<
-            // std::endl;
+        m_algorithmType = TAAlgorithm.findFromOid(extrOID.getValue());
+
+        if (m_algorithmType == TAAlgorithm.UNDEFINED) {
             throw new CVInvalidOidException();
         }
-        
+
         // decode the key depend on the signature algorithm
-        if (m_algorithmType == TAAlgorithm.RSA_PSS_SHA_512 || m_algorithmType == TAAlgorithm.RSA_PSS_SHA_256
-                || m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_512 || m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_256) { // RSA
+        if (m_algorithmType.isRSAWithSHA()) { // RSA
                                                                                                                        // KEy
             
             // Modulus
@@ -264,8 +226,7 @@ public class CVPubKeyHolder {
             if (m_ECPubPoint != null) {
                 m_ECPubPoint = null;
             }
-        } else if (m_algorithmType == TAAlgorithm.ECDSA_SHA_512
-                || m_algorithmType == TAAlgorithm.ECDSA_SHA_256) { // ECDSA Key
+        } else if (m_algorithmType.isECDSAWithSHA()) { // ECDSA Key
         
             TLV extrPrime = TLV.extract(data);
             // check whether or not the EC domain parameter is available
@@ -567,33 +528,15 @@ public class CVPubKeyHolder {
         Signature sig = null;
         // Initialize the signature check depended on the chosen signature
         // algorithm
-        switch (m_algorithmType) {
-            case RSA_v1_5_SHA_512:
-                sig = Signature.getInstance("SHA512WithRSA", new BouncyCastleProvider());
-                break;
-            case RSA_v1_5_SHA_256:
-                sig = Signature.getInstance("SHA256WithRSA", new BouncyCastleProvider());
-                break;
-            case RSA_PSS_SHA_512:
-                sig = Signature.getInstance("SHA512withRSA/PSS", new BouncyCastleProvider());
-                break;
-            case RSA_PSS_SHA_256:
-                sig = Signature.getInstance("SHA256withRSA/PSS", new BouncyCastleProvider());
-                break;
-            case ECDSA_SHA_512:
-                sig = Signature.getInstance("SHA512withCVC-ECDSA", new BouncyCastleProvider());
-                break;
-            case ECDSA_SHA_256:
-                sig = Signature.getInstance("SHA256withCVC-ECDSA", new BouncyCastleProvider());
-                break;
-            default:
-                // m_rLog << "unknown algorithm type" << std::endl;
-                throw new CVUnknownAlgorithmException();
+        if (m_algorithmType == TAAlgorithm.UNDEFINED) {
+            // m_rLog << "unknown algorithm type" << std::endl;
+            throw new CVUnknownAlgorithmException();
         }
-        
+
+        sig = Signature.getInstance(m_algorithmType.getSignAlgo(), new BouncyCastleProvider());
+
         // Rebuild a keysource for cryptopp as bytequeue
-        if (m_algorithmType == TAAlgorithm.ECDSA_SHA_512
-                || m_algorithmType == TAAlgorithm.ECDSA_SHA_256) {
+        if (m_algorithmType.isECDSAWithSHA()) {
             // test whether or not all EC key components are available
             if (!isDomainParamPresent()) {
                 // m_rLog << "Domain parameter not present" << std::endl;
@@ -646,8 +589,7 @@ public class CVPubKeyHolder {
             CVMissingKeyException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
         PublicKey pubKey = null;
         
-        if (m_algorithmType == TAAlgorithm.ECDSA_SHA_512
-                || m_algorithmType == TAAlgorithm.ECDSA_SHA_256) {
+        if (m_algorithmType.isECDSAWithSHA()) {
             // test whether or not all EC key components are available
             if (!isDomainParamPresent()) {
                 // m_rLog << "Domain parameter not present" << std::endl;
@@ -851,11 +793,12 @@ public class CVPubKeyHolder {
     }
     
     /**
-     * This function sets the hash algorithm type
+     * This function sets the hash algorithm type. cannot be null
      * 
      * @param type
      */
     public void setAlgorithm(TAAlgorithm type) {
+        Objects.requireNonNull(type, "TAAlgorithm cannot be null");
         m_algorithmType = type;
     }
     
@@ -875,14 +818,10 @@ public class CVPubKeyHolder {
      * @return returns the key type
      */
     public KeyType getKeyType() {
-        if (m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_512 || m_algorithmType == TAAlgorithm.RSA_v1_5_SHA_256
-                || m_algorithmType == TAAlgorithm.RSA_PSS_SHA_512 || m_algorithmType == TAAlgorithm.RSA_PSS_SHA_256) {
-            return KeyType.KEY_RSA;
-        } else if (m_algorithmType == TAAlgorithm.ECDSA_SHA_256 || m_algorithmType == TAAlgorithm.ECDSA_SHA_512) {
-            return KeyType.KEY_ECDSA;
-        }
-        
+        if (m_algorithmType == null) {
         return KeyType.KEY_UNDEFINED;
+    }
+        return m_algorithmType.getKeyType();
     }
     
     /**
