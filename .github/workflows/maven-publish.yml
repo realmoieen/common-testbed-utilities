@@ -23,6 +23,6 @@ jobs:
           java-version: 21
 
       - name: Publish
-        run: mvn -B deploy
+        run: mvn -B clean test deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

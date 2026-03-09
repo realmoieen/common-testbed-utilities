@@ -17,13 +17,13 @@ A complete guideline for an eID-Testbed deployment is given in the handbook (`se
 ## Dependencies
 
 | Description              | Library                                        | Version | Date         |
-| :----------------------- | :--------------------------------------------- | :------ | :----------- |
-| Testing                  | org.testng                                     | 7.6.0   | May 18, 2022 |
-| Logging                  | org.apache.logging.log4j.log4j-core            | 2.17.2  | Feb 27, 2022 |
-| Key and Cert. Generation | org.bouncycastle.bcpkix-jdk18on                | 1.78.1  | Apr 18, 2024 |
-| Key and Cert. Generation | org.bouncycastle.bcprov-jdk18on                | 1.78.1  | Apr 18, 2024 |
-| Key and Cert. Generation | org.bouncycastle.bctls-jdk18on                 | 1.78.1  | Apr 18, 2024 |
-| Key and Cert. Generation | org.bouncycastle.bcutil-jdk18on                | 1.78.1  | Apr 18, 2024 |
+| :----------------------- | :--------------------------------------------- |:--------|:-------------|
+| Testing                  | org.testng                                     | 7.7.0   | Mar 9, 2026 |
+| Logging                  | org.apache.logging.log4j.log4j-core            | 2.25.3  | Mar 9, 2026 |
+| Key and Cert. Generation | org.bouncycastle.bcpkix-jdk18on                | 1.83    | Mar 9, 2026  |
+| Key and Cert. Generation | org.bouncycastle.bcprov-jdk18on                | 1.83    | Mar 9, 2026 |
+| Key and Cert. Generation | org.bouncycastle.bctls-jdk18on                 | 1.83    | Mar 9, 2026 |
+| Key and Cert. Generation | org.bouncycastle.bcutil-jdk18on                | 1.83    | Mar 9, 2026 |
 | JakartaEE Platform       | jakarta.platform.jakarta.jakartaee-api         | 8.0.0   | Sep 10, 2019 |
 | XML Mapper               | jakarta.platform.jakarta.jakarta.xml.bind-api  | 2.3.2   | Jan 08, 2019 |
 | XML Web Services         | jakarta.platform.jakarta.jakarta.xml.ws-api    | 2.3.2   | Jan 09, 2019 |
